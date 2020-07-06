@@ -54,6 +54,15 @@ class WP_Service_Worker_Configuration_Component implements WP_Service_Worker_Com
 		$current_scope = wp_service_workers()->get_current_scope();
 		$workbox_dir   = sprintf( 'wp-includes/js/workbox-v%s/', PWA_WORKBOX_VERSION );
 
+		/**
+		 * Filter the base URL where workbox scripts are loaded from.
+		 *
+		 * @since 0.6
+		 *
+		 * @param string $base_url Workbox base URL.
+		 */
+		$script_base_url = apply_filters( 'wp_service_worker_script_base_url', PWA_PLUGIN_URL . $workbox_dir );
+
 		$script = '';
 		if ( SCRIPT_DEBUG ) {
 			$enable_debug_log = defined( 'WP_SERVICE_WORKER_DEBUG_LOG' ) && WP_SERVICE_WORKER_DEBUG_LOG;
@@ -64,7 +73,7 @@ class WP_Service_Worker_Configuration_Component implements WP_Service_Worker_Com
 			// Load with importScripts() so that source map is available.
 			$script .= sprintf(
 				"importScripts( %s );\n",
-				wp_service_worker_json_encode( PWA_PLUGIN_URL . $workbox_dir . 'workbox-sw.js' )
+				wp_service_worker_json_encode( $script_base_url . 'workbox-sw.js' )
 			);
 		} else {
 			// Inline the workbox-sw.js to avoid an additional HTTP request.
@@ -74,7 +83,7 @@ class WP_Service_Worker_Configuration_Component implements WP_Service_Worker_Com
 
 		$options = array(
 			'debug'            => SCRIPT_DEBUG, // When true, the dev builds are loaded. Otherwise, the prod builds are used.
-			'modulePathPrefix' => PWA_PLUGIN_URL . $workbox_dir,
+			'modulePathPrefix' => $script_base_url,
 		);
 		$script .= sprintf( "workbox.setConfig( %s );\n", wp_service_worker_json_encode( $options ) );
 
